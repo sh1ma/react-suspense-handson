@@ -1,7 +1,7 @@
 type LoadableState<T> =
   | {
       status: "pending";
-      promise: Promise<T>;
+      promise: Promise<T> | never;
     }
   | {
       status: "fulfilled";
@@ -14,10 +14,10 @@ type LoadableState<T> =
 
 export class Loadable<T> {
   #state: LoadableState<T>;
-  constructor(promise: Promise<T>) {
+  constructor(promise: Promise<T>, cancelPolocy: () => Promise<never>) {
     this.#state = {
       status: "pending",
-      promise: promise.then(
+      promise: Promise.race([promise, cancelPolocy()]).then(
         (data) => {
           this.#state = {
             status: "fulfilled",
